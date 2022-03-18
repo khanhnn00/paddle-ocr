@@ -39,6 +39,39 @@ from ppocr.utils.utility import get_image_file_list
 import tools.program as program
 
 
+# def draw_det_res(dt_boxes, config, img, img_name, save_path):
+#     if len(dt_boxes) > 0:
+#         import cv2
+#         src_im = img
+#         # print(src_im.shape)
+#         save_path = os.path.join(save_path, os.path.basename(edited_name))
+#         cv2.imwrite(save_path, src_im)
+#         edited_name = img_name.split('.')[0] + '_edit' + img_name.split('.')[-1]
+#         res_path = os.path.join(save_path, 'result_det')
+#         if not os.path.exists(res_path):
+#             os.makedirs(res_path)
+#         for i, box in enumerate(dt_boxes):
+#             box = box.astype(np.int32).reshape((-1, 1, 2))
+#             x1, y1 = box[0][0][0], box[0][0][1]
+#             x2, y2 = box[1][0][0], box[1][0][1]
+#             x3, y3 = box[2][0][0], box[2][0][1]
+#             x4, y4 = box[3][0][0], box[3][0][1]
+#             # print('end')
+#             left = x1 if x1<x4 else x4
+#             right = x2 if x2>x3 else x3
+#             top = y1 if y1 < y2 else y2
+#             btm = y3 if y3 > y4 else y4
+#             this_img = src_im[top:btm, left:right, :]
+#             this_pth = os.path.join(res_path, '{}.jpg'.format(i))
+#             cv2.imwrite(this_pth, this_img)
+#             logger.info("The {}-th-rd-nd-st bbox saved in {}".format(i, this_pth))
+#             cv2.polylines(src_im, [box], True, color=(255, 0, 0), thickness=2)
+#         if not os.path.exists(save_path):
+#             os.makedirs(save_path)
+#         save_path = os.path.join(save_path, os.path.basename(edited_name))
+#         cv2.imwrite(save_path, src_im)
+#         logger.info("The detected Image saved in {}".format(save_path))
+
 def draw_det_res(dt_boxes, config, img, img_name, save_path):
     if len(dt_boxes) > 0:
         import cv2
@@ -51,7 +84,6 @@ def draw_det_res(dt_boxes, config, img, img_name, save_path):
         save_path = os.path.join(save_path, os.path.basename(img_name))
         cv2.imwrite(save_path, src_im)
         logger.info("The detected Image saved in {}".format(save_path))
-
 
 @paddle.no_grad()
 def main():
@@ -105,8 +137,10 @@ def main():
                     boxes = post_result[k][0]['points']
                     dt_boxes_list = []
                     for box in boxes:
+                        # logger.info("box: {}".format(box))
                         tmp_json = {"transcription": ""}
                         tmp_json['points'] = box.tolist()
+                        # logger.info("box.tolist(): {}".format(tmp_json['points']))
                         dt_boxes_list.append(tmp_json)
                     det_box_json[k] = dt_boxes_list
                     save_det_path = os.path.dirname(config['Global'][
@@ -117,8 +151,10 @@ def main():
                 dt_boxes_json = []
                 # write result
                 for box in boxes:
+                    # logger.info("box: {}".format(box))
                     tmp_json = {"transcription": ""}
                     tmp_json['points'] = box.tolist()
+                    # logger.info("box.tolist(): {}".format(tmp_json['points']))
                     dt_boxes_json.append(tmp_json)
                 save_det_path = os.path.dirname(config['Global'][
                     'save_res_path']) + "/det_results/"

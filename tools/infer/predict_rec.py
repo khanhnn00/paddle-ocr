@@ -37,6 +37,7 @@ logger = get_logger()
 
 class TextRecognizer(object):
     def __init__(self, args):
+        #print(args)
         self.rec_image_shape = [int(v) for v in args.rec_image_shape.split(",")]
         self.rec_batch_num = args.rec_batch_num
         self.rec_algorithm = args.rec_algorithm
@@ -95,6 +96,7 @@ class TextRecognizer(object):
                 logger=logger)
 
     def resize_norm_img(self, img, max_wh_ratio):
+        #print('using resize_norm_img')
         imgC, imgH, imgW = self.rec_image_shape
         if self.rec_algorithm == 'NRTR':
             img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -104,6 +106,7 @@ class TextRecognizer(object):
             img = np.array(img)
             norm_img = np.expand_dims(img, -1)
             norm_img = norm_img.transpose((2, 0, 1))
+            
             return norm_img.astype(np.float32) / 128. - 1.
 
         assert imgC == img.shape[2]
@@ -119,15 +122,18 @@ class TextRecognizer(object):
         else:
             resized_w = int(math.ceil(imgH * ratio))
         resized_image = cv2.resize(img, (resized_w, imgH))
+        
         resized_image = resized_image.astype('float32')
         resized_image = resized_image.transpose((2, 0, 1)) / 255
         resized_image -= 0.5
         resized_image /= 0.5
         padding_im = np.zeros((imgC, imgH, imgW), dtype=np.float32)
         padding_im[:, :, 0:resized_w] = resized_image
+        # print(padding_im.shape)
         return padding_im
 
     def resize_norm_img_srn(self, img, image_shape):
+        #print('using resize_norm_img_srn')
         imgC, imgH, imgW = image_shape
 
         img_black = np.zeros((imgH, imgW))

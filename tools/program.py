@@ -210,6 +210,9 @@ def train(config,
         start_epoch = 1
 
     for epoch in range(start_epoch, epoch_num + 1):
+        print('\n===> Training Epoch: [%d/%d]...  Learning Rate: %f'%(epoch,
+                                                                      epoch_num,
+                                                                      optimizer.get_lr()))
         train_dataloader = build_dataloader(
             config, 'Train', device, logger, seed=epoch)
         train_reader_cost = 0.0
@@ -218,157 +221,179 @@ def train(config,
         reader_start = time.time()
         max_iter = len(train_dataloader) - 1 if platform.system(
         ) == "Windows" else len(train_dataloader)
-        for idx, batch in enumerate(train_dataloader):
-            profiler.add_profiler_step(profiler_options)
-            train_reader_cost += time.time() - reader_start
-            if idx >= max_iter:
-                break
-            lr = optimizer.get_lr()
-            images = batch[0]
-            if use_srn:
-                model_average = True
+        with tqdm(total=len(train_dataloader), desc='Epoch: [%d/%d]'%(epoch, epoch_num), miniters=1) as t:
+            for idx, batch in enumerate(train_dataloader):
+                profiler.add_profiler_step(profiler_options)
+                train_reader_cost += time.time() - reader_start
+                if idx >= max_iter:
+                    break
+                lr = optimizer.get_lr()
+                images = batch[0]
+                if use_srn:
+                    model_average = True
 
-            train_start = time.time()
-            # use amp
-            if scaler:
-                with paddle.amp.auto_cast():
+                train_start = time.time()
+                # use amp
+                if scaler:
+                    with paddle.amp.auto_cast():
+                        if model_type == 'table' or extra_input:
+                            preds = model(images, data=batch[1:])
+                        else:
+                            preds = model(images)
+                else:
                     if model_type == 'table' or extra_input:
                         preds = model(images, data=batch[1:])
+                    elif model_type == "kie":
+                        preds = model(batch)
                     else:
                         preds = model(images)
-            else:
-                if model_type == 'table' or extra_input:
-                    preds = model(images, data=batch[1:])
-                elif model_type == "kie":
-                    preds = model(batch)
+                loss = loss_class(preds, batch)
+                avg_loss = loss['loss']
+
+                if scaler:
+                    scaled_avg_loss = scaler.scale(avg_loss)
+                    scaled_avg_loss.backward()
+                    scaler.minimize(optimizer, scaled_avg_loss)
                 else:
-                    preds = model(images)
-            loss = loss_class(preds, batch)
-            avg_loss = loss['loss']
+                    avg_loss.backward()
+                    optimizer.step()
+                optimizer.clear_grad()
 
-            if scaler:
-                scaled_avg_loss = scaler.scale(avg_loss)
-                scaled_avg_loss.backward()
-                scaler.minimize(optimizer, scaled_avg_loss)
-            else:
-                avg_loss.backward()
-                optimizer.step()
-            optimizer.clear_grad()
+                train_run_cost += time.time() - train_start
+                total_samples += len(images)
 
-            train_run_cost += time.time() - train_start
-            total_samples += len(images)
+                if not isinstance(lr_scheduler, float):
+                    lr_scheduler.step()
 
-            if not isinstance(lr_scheduler, float):
-                lr_scheduler.step()
+                # logger and visualdl
+                stats = {k: v.numpy().mean() for k, v in loss.items()}
+                stats['lr'] = lr
+                train_stats.update(stats)
 
-            # logger and visualdl
-            stats = {k: v.numpy().mean() for k, v in loss.items()}
-            stats['lr'] = lr
-            train_stats.update(stats)
+                if cal_metric_during_train  and model_type is not "det":  # only rec and cls need
+                    batch = [item.numpy() for item in batch]
+                    if model_type in ['table', 'kie']:
+                        eval_class(preds, batch)
+                    else:
+                        post_result = post_process_class(preds, batch[1])
+                        eval_class(post_result, batch)
+                    metric = eval_class.get_metric()
+                    train_stats.update(metric)
 
-            if cal_metric_during_train  and model_type is not "det":  # only rec and cls need
-                batch = [item.numpy() for item in batch]
-                if model_type in ['table', 'kie']:
-                    eval_class(preds, batch)
-                else:
-                    post_result = post_process_class(preds, batch[1])
-                    eval_class(post_result, batch)
-                metric = eval_class.get_metric()
-                train_stats.update(metric)
+                if vdl_writer is not None and dist.get_rank() == 0:
+                    for k, v in train_stats.get().items():
+                        vdl_writer.add_scalar('TRAIN/{}'.format(k), v, global_step)
+                    vdl_writer.add_scalar('TRAIN/lr', lr, global_step)
 
-            if vdl_writer is not None and dist.get_rank() == 0:
-                for k, v in train_stats.get().items():
-                    vdl_writer.add_scalar('TRAIN/{}'.format(k), v, global_step)
-                vdl_writer.add_scalar('TRAIN/lr', lr, global_step)
+                # if dist.get_rank() == 0 and (
+                #     (global_step > 0 and global_step % print_batch_step == 0) or
+                #     (idx >= len(train_dataloader) - 1)):
+                #     logs = train_stats.log()
+                #     # strs = 'epoch: [{}/{}], iter: {}, {}, reader_cost: {:.5f} s, batch_cost: {:.5f} s, samples: {}, ips: {:.5f}'.format(
+                #     #     epoch, epoch_num, global_step, logs, train_reader_cost /
+                #     #     print_batch_step, (train_reader_cost + train_run_cost) /
+                #     #     print_batch_step, total_samples,
+                #     #     total_samples / (train_reader_cost + train_run_cost))
+                #     # logger.info(strs)
+                
+                #     train_reader_cost = 0.0
+                #     train_run_cost = 0.0
+                #     total_samples = 0
 
-            if dist.get_rank() == 0 and (
-                (global_step > 0 and global_step % print_batch_step == 0) or
-                (idx >= len(train_dataloader) - 1)):
                 logs = train_stats.log()
-                strs = 'epoch: [{}/{}], iter: {}, {}, reader_cost: {:.5f} s, batch_cost: {:.5f} s, samples: {}, ips: {:.5f}'.format(
-                    epoch, epoch_num, global_step, logs, train_reader_cost /
-                    print_batch_step, (train_reader_cost + train_run_cost) /
-                    print_batch_step, total_samples,
-                    total_samples / (train_reader_cost + train_run_cost))
-                logger.info(strs)
+                
+                # eval
+                if global_step > start_eval_step and \
+                        (global_step - start_eval_step) % eval_batch_step == 0 and dist.get_rank() == 0:
+                    if model_average:
+                        Model_Average = paddle.incubate.optimizer.ModelAverage(
+                            0.15,
+                            parameters=model.parameters(),
+                            min_average_window=10000,
+                            max_average_window=15625)
+                        Model_Average.apply()
+                    cur_metric = eval(
+                        model,
+                        valid_dataloader,
+                        post_process_class,
+                        eval_class,
+                        model_type,
+                        extra_input=extra_input)
+                    cur_metric_str = 'cur metric, {}'.format(', '.join(
+                        ['{}: {}'.format(k, v) for k, v in cur_metric.items()]))
+                    logger.info(cur_metric_str)
+
+                    # logger metric
+                    if vdl_writer is not None:
+                        for k, v in cur_metric.items():
+                            if isinstance(v, (float, int)):
+                                vdl_writer.add_scalar('EVAL/{}'.format(k),
+                                                    cur_metric[k], global_step)
+                    if cur_metric[main_indicator] >= best_model_dict[
+                            main_indicator]:
+                        best_model_dict.update(cur_metric)
+                        best_model_dict['best_epoch'] = epoch
+                        save_model(
+                            model,
+                            optimizer,
+                            save_model_dir,
+                            logger,
+                            is_best=True,
+                            prefix='best_accuracy',
+                            best_model_dict=best_model_dict,
+                            epoch=epoch,
+                            global_step=global_step)
+                    best_str = 'best metric, {}'.format(', '.join([
+                        '{}: {}'.format(k, v) for k, v in best_model_dict.items()
+                    ]))
+                    logger.info(best_str)
+                    # logger best metric
+                    if vdl_writer is not None:
+                        vdl_writer.add_scalar('EVAL/best_{}'.format(main_indicator),
+                                            best_model_dict[main_indicator],
+                                            global_step)
+                global_step += 1
+                optimizer.clear_grad()
+                reader_start = time.time()
+
+                tmp_train_reader_cost = train_reader_cost
+                tmp_train_run_cost = train_run_cost
+                tmp_total_samples = total_samples
+
                 train_reader_cost = 0.0
                 train_run_cost = 0.0
                 total_samples = 0
-            # eval
-            if global_step > start_eval_step and \
-                    (global_step - start_eval_step) % eval_batch_step == 0 and dist.get_rank() == 0:
-                if model_average:
-                    Model_Average = paddle.incubate.optimizer.ModelAverage(
-                        0.15,
-                        parameters=model.parameters(),
-                        min_average_window=10000,
-                        max_average_window=15625)
-                    Model_Average.apply()
-                cur_metric = eval(
-                    model,
-                    valid_dataloader,
-                    post_process_class,
-                    eval_class,
-                    model_type,
-                    extra_input=extra_input)
-                cur_metric_str = 'cur metric, {}'.format(', '.join(
-                    ['{}: {}'.format(k, v) for k, v in cur_metric.items()]))
-                logger.info(cur_metric_str)
 
-                # logger metric
-                if vdl_writer is not None:
-                    for k, v in cur_metric.items():
-                        if isinstance(v, (float, int)):
-                            vdl_writer.add_scalar('EVAL/{}'.format(k),
-                                                  cur_metric[k], global_step)
-                if cur_metric[main_indicator] >= best_model_dict[
-                        main_indicator]:
-                    best_model_dict.update(cur_metric)
-                    best_model_dict['best_epoch'] = epoch
-                    save_model(
-                        model,
-                        optimizer,
-                        save_model_dir,
-                        logger,
-                        is_best=True,
-                        prefix='best_accuracy',
-                        best_model_dict=best_model_dict,
-                        epoch=epoch,
-                        global_step=global_step)
-                best_str = 'best metric, {}'.format(', '.join([
-                    '{}: {}'.format(k, v) for k, v in best_model_dict.items()
-                ]))
-                logger.info(best_str)
-                # logger best metric
-                if vdl_writer is not None:
-                    vdl_writer.add_scalar('EVAL/best_{}'.format(main_indicator),
-                                          best_model_dict[main_indicator],
-                                          global_step)
-            global_step += 1
-            optimizer.clear_grad()
-            reader_start = time.time()
-        if dist.get_rank() == 0:
-            save_model(
-                model,
-                optimizer,
-                save_model_dir,
-                logger,
-                is_best=False,
-                prefix='latest',
-                best_model_dict=best_model_dict,
-                epoch=epoch,
-                global_step=global_step)
-        if dist.get_rank() == 0 and epoch > 0 and epoch % save_epoch_step == 0:
-            save_model(
-                model,
-                optimizer,
-                save_model_dir,
-                logger,
-                is_best=False,
-                prefix='iter_epoch_{}'.format(epoch),
-                best_model_dict=best_model_dict,
-                epoch=epoch,
-                global_step=global_step)
+                t.set_postfix_str("{}, reader_cost: {:.5f}s, batch_cost: {:.5f}s,".format(
+                    logs, tmp_train_reader_cost /
+                    print_batch_step, (tmp_train_reader_cost + tmp_train_run_cost) /
+                    print_batch_step))
+                t.update()
+                
+            ##OUT OF FOR##    
+            if dist.get_rank() == 0:
+                save_model(
+                    model,
+                    optimizer,
+                    save_model_dir,
+                    logger,
+                    is_best=False,
+                    prefix='latest',
+                    best_model_dict=best_model_dict,
+                    epoch=epoch,
+                    global_step=global_step)
+            if dist.get_rank() == 0 and epoch > 0 and epoch % save_epoch_step == 0:
+                save_model(
+                    model,
+                    optimizer,
+                    save_model_dir,
+                    logger,
+                    is_best=False,
+                    prefix='iter_epoch_{}'.format(epoch),
+                    best_model_dict=best_model_dict,
+                    epoch=epoch,
+                    global_step=global_step)
+
     best_str = 'best metric, {}'.format(', '.join(
         ['{}: {}'.format(k, v) for k, v in best_model_dict.items()]))
     logger.info(best_str)

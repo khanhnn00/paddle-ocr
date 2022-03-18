@@ -1,0 +1,1 @@
+python3.8 tools/infer_det.py -c configs/det/det_mv3_db.yml  -o Global.infer_img=../dataset/corner_dataset/images/train/crawl_00028.jpg Global.checkpoints="./pretrain_models/ch_ppocr_mobile_v2.0_det_train/best_accuracy"

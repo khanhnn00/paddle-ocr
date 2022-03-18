@@ -22,6 +22,7 @@ __all__ = ['build_model']
 
 
 def build_model(config):
+    print(config)
     config = copy.deepcopy(config)
     if not "name" in config:
         arch = BaseModel(config)

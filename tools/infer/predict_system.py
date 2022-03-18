@@ -158,11 +158,12 @@ def main(args):
             logger.debug("{}, {:.3f}".format(text, score))
 
         if is_visualize:
+            print('using visualize')
             image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
             boxes = dt_boxes
             txts = [rec_res[i][0] for i in range(len(rec_res))]
             scores = [rec_res[i][1] for i in range(len(rec_res))]
-
+            print(boxes)
             draw_img = draw_ocr_box_txt(
                 image,
                 boxes,
@@ -174,6 +175,7 @@ def main(args):
             os.makedirs(draw_img_save_dir, exist_ok=True)
             if flag:
                 image_file = image_file[:-3] + "png"
+                print('using flag')
             cv2.imwrite(
                 os.path.join(draw_img_save_dir, os.path.basename(image_file)),
                 draw_img[:, :, ::-1])

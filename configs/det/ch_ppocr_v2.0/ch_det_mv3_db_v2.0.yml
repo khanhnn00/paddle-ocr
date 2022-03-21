@@ -1,14 +1,14 @@
 Global:
   use_gpu: true
-  epoch_num: 1200
+  epoch_num: 500
   log_smooth_window: 20
   print_batch_step: 2
-  save_model_dir: ./output/ch_db_mv3/
-  save_epoch_step: 1200
+  save_model_dir: ./output/det_mobile_v2.0/
+  save_epoch_step: 100
   # evaluation is run every 5000 iterations after the 4000th iteration
   eval_batch_step: [3000, 2000]
   cal_metric_during_train: False
-  pretrained_model: ./pretrain_models/MobileNetV3_large_x0_5_pretrained
+  pretrained_model: ./pretrain_models/ch_ppocr_mobile_v2.0_det_train
   checkpoints:
   save_inference_dir:
   use_visualdl: False
@@ -65,9 +65,9 @@ Metric:
 Train:
   dataset:
     name: SimpleDataSet
-    data_dir: ./train_data/icdar2015/text_localization/
+    data_dir: ../dataset/cavet_icdar_v2
     label_file_list:
-      - ./train_data/icdar2015/text_localization/train_icdar2015_label.txt
+      - ../dataset/cavet_icdar_v2/train.txt
     ratio_list: [1.0]
     transforms:
       - DecodeImage: # load image
@@ -101,15 +101,15 @@ Train:
   loader:
     shuffle: True
     drop_last: False
-    batch_size_per_card: 8
-    num_workers: 4
+    batch_size_per_card: 256
+    num_workers: 8
 
 Eval:
   dataset:
     name: SimpleDataSet
-    data_dir: ./train_data/icdar2015/text_localization/
+    data_dir: ../dataset/cavet_icdar_v2
     label_file_list:
-      - ./train_data/icdar2015/text_localization/test_icdar2015_label.txt
+      - ../dataset/cavet_icdar_v2/test.txt
     transforms:
       - DecodeImage: # load image
           img_mode: BGR

@@ -516,7 +516,7 @@ def text_visual(texts,
     txt_color = (0, 0, 0)
     font = ImageFont.truetype(font_path, font_size, encoding="utf-8")
 
-    gap = font_size + 5
+    gap = font_size +2
     txt_img_list = []
     count, index = 1, 0
     for idx, txt in enumerate(texts):

@@ -21,6 +21,7 @@ ocr = PaddleOCR(cls_model_dir=cls_model_dir, det_model_dir=det_model_dir, rec_mo
 img_path = '../dataset/corner_dataset/images/test/stage0_00118.jpg'
 result = ocr.ocr(img_path, cls=True)
 for line in result:
+    # print('or this shit')
     print(line)
 
 # draw result

@@ -18,7 +18,9 @@ from __future__ import print_function
 
 import os
 import sys
-CUDA_VISIBLE_DEVICES = "0,1"
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+
 __dir__ = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(__dir__)
 sys.path.append(os.path.abspath(os.path.join(__dir__, '..')))
@@ -39,7 +41,6 @@ from ppocr.utils.save_load import load_model
 import tools.program as program
 
 dist.get_world_size()
-
 
 def main(config, device, logger, vdl_writer):
     # init dist environment

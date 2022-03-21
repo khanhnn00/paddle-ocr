@@ -121,7 +121,6 @@ def main():
             export_single_model(model.model_list[idx], archs[idx],
                                 sub_model_save_path, logger)
     else:
-        save_path = os.path.join(save_path, "inference")
         export_single_model(model, arch_config, save_path, logger)
 
 

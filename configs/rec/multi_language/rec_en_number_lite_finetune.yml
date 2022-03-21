@@ -3,13 +3,13 @@ Global:
   epoch_num: 500
   log_smooth_window: 20
   print_batch_step: 10
-  save_model_dir: ./output/rec_en_number_lite
-  save_epoch_step: 3
+  save_model_dir: ./output/rec_en_number_lite_finetune
+  save_epoch_step: 50
   # evaluation is run every 5000 iterations after the 4000th iteration
   eval_batch_step: [0, 500]
   # if pretrained_model is saved in static mode, load_static_weights must set to True
   cal_metric_during_train: True
-  pretrained_model: ./pretrain_models/en_number_mobile_v2.0_rec_train/best_accuracy
+  pretrained_model: ./output/rec_en_number_lite/best_accuracy
   checkpoints: 
   save_inference_dir: 
   use_visualdl: True
@@ -62,6 +62,8 @@ Metric:
 Train:
   dataset:
     name: SimpleDataSet
+    # data_dir: ../dataset/vcc_recog/
+    # label_file_list: ["../dataset/vcc_recog/train.txt"]
     data_dir: ../dataset/ocr_dataset/vi_00
     label_file_list: ["./gt.txt"]
     transforms:
@@ -76,13 +78,15 @@ Train:
           keep_keys: ['image', 'label', 'length'] # dataloader will return list in this order
   loader:
     shuffle: True
-    batch_size_per_card: 300
+    batch_size_per_card: 380
     drop_last: True
     num_workers: 8
 
 Eval:
   dataset:
     name: SimpleDataSet
+    # data_dir: ../dataset/vcc_recog/
+    # label_file_list: ["../dataset/vcc_recog/train.txt"]
     data_dir: ../dataset/ocr_dataset/vi_00
     label_file_list: ["./eval.txt"]
     transforms:

@@ -203,6 +203,25 @@ class OCRSystem(object):
             gpu_id = env_cuda[0].strip().split("=")[1]
             return int(gpu_id[0])
 
+    def write_output(self, rec_det_res, result_file_path='./result.txt', prob_thres=0.5):
+        result = ''
+        for res in rec_det_res:
+            bbox, value = res
+            des, prob = value[0], value[1]
+            s = []
+            for i, box in enumerate(bbox):
+                xx, yy = box
+                s.append(str(xx))
+                s.append(str(yy))
+            if prob > prob_thres:
+                line = ','.join(s) + ',' + des
+            else:
+                line = ','.join(s) + ','
+            result += line + '\n'
+        result = result.rstrip('\n')
+        with open(result_file_path, 'w', encoding='utf8') as res:
+            res.write(result)
+
     def __call__(self, img_list):
         start = time.time()
         for file in img_list:
@@ -290,17 +309,24 @@ class OCRSystem(object):
                 "Total time to run for 1 image: %.3fs" % (stop - start))
             
             #visualize result
-            image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-            boxes = dt_boxes
-            txts = [rec_res[i][0] for i in range(len(rec_res))]
-            scores = [rec_res[i][1] for i in range(len(rec_res))]
+            image = Image.fromarray(cv2.cvtColor(ori_im, cv2.COLOR_BGR2RGB))
+            # boxes = dt_boxes
+            # txts = [rec_res[i][0] for i in range(len(rec_res))]
+            # scores = [rec_res[i][1] for i in range(len(rec_res))]
 
             boxes = dt_boxes
             txts = [rec_res[i][0] for i in range(len(rec_res))]
             scores = [rec_res[i][1] for i in range(len(rec_res))]
             im_show = draw_ocr(image, boxes, txts, scores, font_path='./StyleText/fonts/en_standard.ttf')
             im_show = Image.fromarray(im_show)
-            im_show.save('my_result.jpg')
+            im_show.save('result.jpg')
+
+            #write_result for the next step
+            final_res = [[box.tolist(), res] for box, res in zip(dt_boxes, rec_res)]
+            for line in final_res:
+                print(line)
+            self.write_output(final_res)
+
 
 def main():
     ocr = OCRSystem(config, device, logger, vdl_writer)

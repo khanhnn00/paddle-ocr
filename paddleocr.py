@@ -489,12 +489,13 @@ def main():
                                 rec=args.rec,
                                 cls=args.use_angle_cls)
             if result is not None:
+                # print('cai nay ha')
                 for line in result:
                     logger.info(line)
         elif args.type == 'structure':
             result = engine(img_path)
             save_structure_res(result, args.output, img_name)
-
+            print('hay cai nay')
             for item in result:
                 item.pop('img')
                 logger.info(item)

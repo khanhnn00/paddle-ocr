@@ -9,8 +9,8 @@ Global:
   eval_batch_step: [0, 500]
   # if pretrained_model is saved in static mode, load_static_weights must set to True
   cal_metric_during_train: True
-  pretrained_model: ./output/rec_en_number_lite/best_accuracy
-  checkpoints: 
+  pretrained_model: ./output/rec_en_number_lite_finetune/best_accuracy
+  checkpoints: ./output/rec_en_number_lite_finetune/best_accuracy
   save_inference_dir: 
   use_visualdl: True
   infer_img: ../dataset/corner_dataset/images/train/crawl_00028.jpg

@@ -3,14 +3,14 @@ Global:
   epoch_num: 500
   log_smooth_window: 20
   print_batch_step: 10
-  save_model_dir: ./output/rec_en_number_lite_finetune
+  save_model_dir: ./output/rec_en_number_lite_final
   save_epoch_step: 50
   # evaluation is run every 5000 iterations after the 4000th iteration
   eval_batch_step: [0, 500]
   # if pretrained_model is saved in static mode, load_static_weights must set to True
   cal_metric_during_train: True
-  pretrained_model: ./output/rec_en_number_lite_finetune/best_accuracy
-  checkpoints: ./output/rec_en_number_lite_finetune/best_accuracy
+  pretrained_model: ./output/rec_en_number_lite_vietocr/best_accuracy
+  checkpoints:
   save_inference_dir: 
   use_visualdl: True
   infer_img: ../dataset/corner_dataset/images/train/crawl_00028.jpg
@@ -62,10 +62,10 @@ Metric:
 Train:
   dataset:
     name: SimpleDataSet
-    # data_dir: ../dataset/vcc_recog/
-    # label_file_list: ["../dataset/vcc_recog/train.txt"]
-    data_dir: ../dataset/ocr_dataset/vi_00
-    label_file_list: ["./gt.txt"]
+    data_dir: ../dataset/vcc_recog/
+    label_file_list: ["../dataset/vcc_recog/train.txt"]
+    # data_dir: ../dataset/ocr_dataset/vi_00
+    # label_file_list: ["./gt.txt"]
     transforms:
       - DecodeImage: # load image
           img_mode: BGR
@@ -78,17 +78,17 @@ Train:
           keep_keys: ['image', 'label', 'length'] # dataloader will return list in this order
   loader:
     shuffle: True
-    batch_size_per_card: 380
+    batch_size_per_card: 256
     drop_last: True
     num_workers: 8
 
 Eval:
   dataset:
     name: SimpleDataSet
-    # data_dir: ../dataset/vcc_recog/
-    # label_file_list: ["../dataset/vcc_recog/train.txt"]
-    data_dir: ../dataset/ocr_dataset/vi_00
-    label_file_list: ["./eval.txt"]
+    data_dir: ../dataset/vcc_recog/
+    label_file_list: ["../dataset/vcc_recog/test.txt"]
+    # data_dir: ../dataset/ocr_dataset/vi_00
+    # label_file_list: ["./eval.txt"]
     transforms:
       - DecodeImage: # load image
           img_mode: BGR

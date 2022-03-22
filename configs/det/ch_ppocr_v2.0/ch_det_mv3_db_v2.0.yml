@@ -1,6 +1,6 @@
 Global:
   use_gpu: true
-  epoch_num: 500
+  epoch_num: 1200
   log_smooth_window: 20
   print_batch_step: 2
   save_model_dir: ./output/det_mobile_v2.0/
@@ -8,7 +8,7 @@ Global:
   # evaluation is run every 5000 iterations after the 4000th iteration
   eval_batch_step: [3000, 2000]
   cal_metric_during_train: False
-  pretrained_model: ./output/ch_ppocr_mobile_v2.0_det_train
+  pretrained_model: ./pretrain_models/MobileNetV3_large_x0_5_pretrained
   checkpoints:
   save_inference_dir:
   use_visualdl: False
@@ -101,8 +101,8 @@ Train:
   loader:
     shuffle: True
     drop_last: False
-    batch_size_per_card: 256
-    num_workers: 8
+    batch_size_per_card: 2
+    num_workers: 4
 
 Eval:
   dataset:

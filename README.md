@@ -4,11 +4,11 @@ PaddleOCR aims to create multilingual, awesome, leading, and practical OCR tools
 
 ## Quick start
 - Clone this repository to your local machine
-- Run the fucking command ``pip install -r requirement.txt`` in order to install needed environment variable.
+- Run the command ``pip install -r requirement.txt`` in order to install needed environment variables.
 - Visit [this link](https://drive.google.com/drive/folders/1e7ug1WLVtxqj9f6kFCDLw1Bvwvo_KDzS?usp=sharing) and download the weights of two models, including recognition and detection.
 - You are asking me where should I put these weights? Good question, now you can put it anywhere you want, just remember to specify the path in your config file, in ``Global.pretrained_model`` section.
 - When running, **MAKE SURE THAT YOUR POINTER IS IN THE PARENT FOLDER**. You can run by the command ``bash ./bash/your-file.sh``. I have created many .sh files for many running cases: run det only (``infer_det.sh``), run recognition only (``infer_rec.sh``) and run det + rec (``infer_full.sh``). You can also specify the weight folder and the image to infer inside the .sh file.
-- Result image should be appear in the parent folder, named ``result.jpg``.
+- Result image should appear in the parent folder, named ``result.jpg``.
 
 ## License
 This project is released under <a href="https://github.com/PaddlePaddle/PaddleOCR/blob/master/LICENSE">Apache 2.0 license</a>

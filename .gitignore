@@ -10,6 +10,7 @@ __pycache__/
 inference/
 inference_results/
 output/
+pretrain_models/
 
 *.DS_Store
 *.vs
@@ -29,7 +30,6 @@ paddleocr.egg-info/
 /deploy/android_demo/app/PaddleLite/
 /deploy/android_demo/app/.cxx/
 /deploy/android_demo/app/cache/
-pretrain_models/x
 debug/
 
 workerlog.*

@@ -22,6 +22,8 @@ pretrain_models/
 *.log
 .clang-format
 .clang_format.hook
+.pre-commit-config.yaml
+.style.yapf
 
 build/
 dist/

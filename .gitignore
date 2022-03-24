@@ -7,10 +7,12 @@ __pycache__/
 # C extensions
 *.so
 
-inference/
-inference_results/
-output/
-pretrain_models/
+PaddleOCR/inference/
+PaddleOCR/inference_results/
+PaddleOCR/output/
+PaddleOCR/deploy
+PaddleOCR/pretrain_models/
+PaddleOCR/tmp/
 PICK/saved
 PICK/pretrained_models
 PICK/data
@@ -29,7 +31,7 @@ PICK/data
 .style.yapf
 
 build/
-dist/
+dist/cd ..
 paddleocr.egg-info/
 /deploy/android_demo/app/OpenCV/
 /deploy/android_demo/app/PaddleLite/

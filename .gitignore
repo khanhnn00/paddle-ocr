@@ -11,6 +11,9 @@ inference/
 inference_results/
 output/
 pretrain_models/
+PICK/saved
+PICK/pretrained_models
+PICK/data
 
 *.DS_Store
 *.vs

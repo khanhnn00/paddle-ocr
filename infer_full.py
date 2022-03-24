@@ -203,12 +203,14 @@ class OCRSystem(object):
             gpu_id = env_cuda[0].strip().split("=")[1]
             return int(gpu_id[0])
 
-    def write_output(self, rec_det_res, result_file_path='./result.txt', prob_thres=0.5):
+    def write_output(self, rec_det_res, result_file_path='result_trans/result.tsv', prob_thres=0.7):
+        if not os.path.exists('result_trans'):
+            os.mkdir('result_trans')
         result = ''
         for res in rec_det_res:
             bbox, value = res
             des, prob = value[0], value[1]
-            s = []
+            s = [str(1)]
             for i, box in enumerate(bbox):
                 xx, yy = box
                 s.append(str(xx))
@@ -310,6 +312,7 @@ class OCRSystem(object):
             
             #visualize result
             image = Image.fromarray(cv2.cvtColor(ori_im, cv2.COLOR_BGR2RGB))
+            image.save('result/original.jpg')
             # boxes = dt_boxes
             # txts = [rec_res[i][0] for i in range(len(rec_res))]
             # scores = [rec_res[i][1] for i in range(len(rec_res))]
@@ -319,7 +322,9 @@ class OCRSystem(object):
             scores = [rec_res[i][1] for i in range(len(rec_res))]
             im_show = draw_ocr(image, boxes, txts, scores, font_path='./StyleText/fonts/en_standard.ttf')
             im_show = Image.fromarray(im_show)
-            im_show.save('result.jpg')
+            if not os.path.exists('result_imgs'):
+                os.mkdir('result_imgs')
+            im_show.save('result_imgs/result.jpg')
 
             #write_result for the next step
             final_res = [[box.tolist(), res] for box, res in zip(dt_boxes, rec_res)]
@@ -327,11 +332,105 @@ class OCRSystem(object):
                 print(line)
             self.write_output(final_res)
 
+            #free memory
+            # del(self.model)
+            # del(norm_img_batch)
+
+import sys
+sys.path.insert(0, './PICK')
+
+import math
+import argparse
+import collections
+from pathlib import Path
+from tqdm import tqdm
+import pandas as pd
+import cv2
+
+import torch
+import torch.nn as nn
+from torch.utils.data.dataloader import DataLoader
+
+from PICK.model.graph import GLCN
+from PICK.parse_config import ConfigParser
+import PICK.model.pick as pick_arch_module
+from PICK.data_utils import pick_dataset
+
+from PICK.model import resnet
+from PICK.data_utils.pick_dataset import PICKDataset, BatchCollateFn
+from PICK.parse_config import *
+
+class PICKSystem(object):
+    def __init__(self):
+        
+        device = torch.device('cuda:0')
+        checkpoint = torch.load('./PICK/pretrained_models/model_best.pth')
+        config = checkpoint['config']
+        state_dict = checkpoint['state_dict']
+        self.pick_model = config.init_obj('model_arch', pick_arch_module)
+        self.pick_model = self.pick_model.to(device)
+        self.pick_model.load_state_dict(state_dict)
+        self.pick_model.eval()
+
+    def __call__(self, img_pth, transcript_pth):
+        self.img_pth = img_pth
+        self.transcript_pth = transcript_pth
+        test_dataset = PICKDataset(boxes_and_transcripts_folder=self.transcript_pth,
+                               images_folder=self.img_pth,
+                               resized_image_size=(480, 960),
+                               ignore_error=False,
+                               training=False)
+        test_data_loader = DataLoader(test_dataset, batch_size=1, shuffle=False,
+                                  num_workers=2, collate_fn=BatchCollateFn(training=False))
+        with torch.no_grad():
+            for step_idx, input_data_item in tqdm(enumerate(test_data_loader)):
+                for key, input_value in input_data_item.items():
+                    if input_value is not None and isinstance(input_value, torch.Tensor):
+                        input_data_item[key] = input_value.to(device)
+
+                # For easier debug.
+                image_names = input_data_item["filenames"]
+
+                output = self.pick_model(**input_data_item)
+                logits = output['logits']  # (B, N*T, out_dim)
+                new_mask = output['new_mask']
+                image_indexs = input_data_item['image_indexs']  # (B,)
+                text_segments = input_data_item['text_segments']  # (B, num_boxes, T)
+                mask = input_data_item['mask']
+                # List[(List[int], torch.Tensor)]
+                best_paths = pick_model.decoder.crf_layer.viterbi_tags(logits, mask=new_mask, logits_batch_first=True)
+                predicted_tags = []
+                for path, score in best_paths:
+                    predicted_tags.append(path)
+
+                # convert iob index to iob string
+                decoded_tags_list = iob_index_to_str(predicted_tags)
+                # union text as a sequence and convert index to string
+                decoded_texts_list = text_index_to_str(text_segments, mask)
+
+                for decoded_tags, decoded_texts, image_index in zip(decoded_tags_list, decoded_texts_list, image_indexs):
+                    print('text', decoded_texts)
+                    # List[ Tuple[str, Tuple[int, int]] ]
+                    spans = bio_tags_to_spans(decoded_tags, [])
+                    spans = sorted(spans, key=lambda x: x[1][0])
+
+                    entities = []  # exists one to many case
+                    for entity_name, range_tuple in spans:
+                        entity = dict(entity_name=entity_name,
+                                    text=''.join(decoded_texts[range_tuple[0]:range_tuple[1] + 1]))
+                        entities.append(entity)
+
+                    result_file = output_path.joinpath(Path(test_dataset.files_list[image_index]).stem + '.txt')
+                    with result_file.open(mode='w', encoding='utf8') as f:
+                        for item in entities:
+                            f.write('{}\t{}\n'.format(item['entity_name'], item['text']))
 
 def main():
     ocr = OCRSystem(config, device, logger, vdl_writer)
+    picker = PICKSystem()
     img_list = get_image_file_list(config['Det']['Global']['infer_img'])
     ocr(img_list)
+    picker('result_imgs', 'result_trans')
     
 if __name__ == '__main__':
     config, device, logger, vdl_writer = program.preprocess()

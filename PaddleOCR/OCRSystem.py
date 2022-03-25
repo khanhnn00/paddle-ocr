@@ -308,14 +308,14 @@ class OCRSystem(object):
                     rec_res[indices[beg_img_no + rno]] = rec_result[rno]
             stop_rec = time.time()
             for text, score in rec_res:
-                logger.debug("{}, {:.3f}".format(text, score))
+                self.logger.debug("{}, {:.3f}".format(text, score))
             
             stop = time.time()
-            logger.info(
+            self.logger.info(
                 "Predict time of detection phase: %.3fs" % (stop_det - start_det))
-            logger.info(
+            self.logger.info(
                 "Predict time of recognition phase: %.3fs" % (stop_rec - start_rec))
-            logger.info(
+            self.logger.info(
                 "Total time to run for 1 image: %.3fs" % (stop - start))
             
             #visualize result
@@ -331,7 +331,7 @@ class OCRSystem(object):
             boxes = dt_boxes
             txts = [rec_res[i][0] for i in range(len(rec_res))]
             scores = [rec_res[i][1] for i in range(len(rec_res))]
-            im_show = draw_ocr(image, boxes, txts, scores, font_path='./StyleText/fonts/en_standard.ttf')
+            im_show = draw_ocr(image, boxes, txts, scores, font_path='./PaddleOCR/StyleText/fonts/en_standard.ttf')
             im_show = Image.fromarray(im_show)
             im_show.save('result/result.jpg')
 

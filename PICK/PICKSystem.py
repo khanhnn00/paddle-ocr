@@ -12,6 +12,7 @@ ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
 import math
 import argparse
 import collections
+import time
 
 from tqdm import tqdm
 import pandas as pd
@@ -32,12 +33,12 @@ from parse_config import *
 class PICKSystem(object):
     def __init__(self, logger):
         self.logger = logger
-        device = torch.device('cuda')
+        self.device = torch.device('cuda')
         checkpoint = torch.load('./PICK/pretrained_models/model_best.pth')
         config = checkpoint['config']
         state_dict = checkpoint['state_dict']
         self.pick_model = config.init_obj('model_arch', pick_arch_module)
-        self.pick_model = self.pick_model.to(device)
+        self.pick_model = self.pick_model.to(self.device)
         self.pick_model.load_state_dict(state_dict)
         self.pick_model.eval()
 
@@ -56,7 +57,7 @@ class PICKSystem(object):
             for step_idx, input_data_item in tqdm(enumerate(test_data_loader)):
                 for key, input_value in input_data_item.items():
                     if input_value is not None and isinstance(input_value, torch.Tensor):
-                        input_data_item[key] = input_value.to(device)
+                        input_data_item[key] = input_value.to(self.device)
 
                 # For easier debug.
                 image_names = input_data_item["filenames"]
@@ -68,7 +69,7 @@ class PICKSystem(object):
                 text_segments = input_data_item['text_segments']  # (B, num_boxes, T)
                 mask = input_data_item['mask']
                 # List[(List[int], torch.Tensor)]
-                best_paths = pick_model.decoder.crf_layer.viterbi_tags(logits, mask=new_mask, logits_batch_first=True)
+                best_paths = self.pick_model.decoder.crf_layer.viterbi_tags(logits, mask=new_mask, logits_batch_first=True)
                 predicted_tags = []
                 for path, score in best_paths:
                     predicted_tags.append(path)
@@ -90,7 +91,7 @@ class PICKSystem(object):
                                     text=''.join(decoded_texts[range_tuple[0]:range_tuple[1] + 1]))
                         entities.append(entity)
 
-                    result_file = output_path.joinpath(Path(test_dataset.files_list[image_index]).stem + '.txt')
+                    result_file = './result/PICK.txt'
                     with result_file.open(mode='w', encoding='utf8') as f:
                         for item in entities:
                             f.write('{}\t{}\n'.format(item['entity_name'], item['text']))

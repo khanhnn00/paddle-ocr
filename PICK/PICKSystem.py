@@ -13,6 +13,7 @@ import math
 import argparse
 import collections
 import time
+import json
 
 from tqdm import tqdm
 import pandas as pd
@@ -29,6 +30,8 @@ from data_utils import pick_dataset
 from model import resnet
 from data_utils.pick_dataset import PICKDataset, BatchCollateFn
 from parse_config import *
+from utils.util import iob_index_to_str, text_index_to_str
+from allennlp.data.dataset_readers.dataset_utils.span_utils import bio_tags_to_spans
 
 class PICKSystem(object):
     def __init__(self, logger):
@@ -43,6 +46,7 @@ class PICKSystem(object):
         self.pick_model.eval()
 
     def __call__(self, img_pth, transcript_pth):
+        os.mkdir('result_json')
         start = time.time()
         self.img_pth = img_pth
         self.transcript_pth = transcript_pth
@@ -60,7 +64,8 @@ class PICKSystem(object):
                         input_data_item[key] = input_value.to(self.device)
 
                 # For easier debug.
-                image_names = input_data_item["filenames"]
+                image_name = input_data_item["filenames"][0]
+                # print('image names la: {}'.format(image_names))
 
                 output = self.pick_model(**input_data_item)
                 logits = output['logits']  # (B, N*T, out_dim)
@@ -80,7 +85,7 @@ class PICKSystem(object):
                 decoded_texts_list = text_index_to_str(text_segments, mask)
 
                 for decoded_tags, decoded_texts, image_index in zip(decoded_tags_list, decoded_texts_list, image_indexs):
-                    print('text', decoded_texts)
+                    # print('text', decoded_texts)
                     # List[ Tuple[str, Tuple[int, int]] ]
                     spans = bio_tags_to_spans(decoded_tags, [])
                     spans = sorted(spans, key=lambda x: x[1][0])
@@ -91,9 +96,15 @@ class PICKSystem(object):
                                     text=''.join(decoded_texts[range_tuple[0]:range_tuple[1] + 1]))
                         entities.append(entity)
 
-                    result_file = './result/PICK.txt'
-                    with result_file.open(mode='w', encoding='utf8') as f:
+                    result_file = './result_json/{}.json'.format(os.path.basename(image_name).split('.')[0])
+                    final_dict = {}
+                    with open(result_file, 'w') as f:
                         for item in entities:
-                            f.write('{}\t{}\n'.format(item['entity_name'], item['text']))
+                            final_dict[item['entity_name']] = item['text']
+                            # f.write('{}\t{}\n'.format(item['entity_name'], item['text']))
+                    # json.dump()
+                    with open(result_file, 'w', encoding='utf8') as json_file:
+                        json.dump(final_dict, json_file, sort_keys=True, ensure_ascii=False, indent=4)
+                    json_file.close()
         stop = time.time()
-        self.logger.infor("PICK takes {}s to finish 1 image".format(stop-start))
+        self.logger.info("PICK takes {}s to finish 1 image".format(stop-start))

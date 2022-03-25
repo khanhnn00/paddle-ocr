@@ -1,5 +1,7 @@
 import sys
 from pathlib import Path
+import shutil
+import os
 
 sys.path.insert(0, './PICK')
 sys.path.insert(0, './PaddleOCR')
@@ -17,5 +19,11 @@ def main():
     picker('result_imgs', 'result_trans')
     
 if __name__ == '__main__':
+    if os.path.exists('./result_imgs'):
+        shutil.rmtree('./result_imgs')
+    if os.path.exists('./result_trans'):
+        shutil.rmtree('./result_trans')
+    if os.path.exists('./result_json'):
+        shutil.rmtree('./result_json')
     config, device, logger, vdl_writer = program.preprocess()
     main()

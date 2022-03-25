@@ -211,7 +211,7 @@ class OCRSystem(object):
             gpu_id = env_cuda[0].strip().split("=")[1]
             return int(gpu_id[0])
 
-    def write_output(self, rec_det_res, result_file_path='result_trans/result.tsv', prob_thres=0.7):
+    def write_output(self, rec_det_res, file_name, prob_thres=0.7):
         if not os.path.exists('result_trans'):
             os.mkdir('result_trans')
         result = ''
@@ -229,12 +229,14 @@ class OCRSystem(object):
                 line = ','.join(s) + ','
             result += line + '\n'
         result = result.rstrip('\n')
+        result_file_path = 'result_trans/{}.tsv'.format(file_name.split('.')[0])
         with open(result_file_path, 'w', encoding='utf8') as res:
             res.write(result)
 
     def __call__(self, img_list):
         start = time.time()
         for file in img_list:
+            this_img_name = os.path.basename(file)
             self.logger.info("infer_img: {}".format(file))
             with open(file, 'rb') as f:
                 img = f.read()
@@ -322,8 +324,8 @@ class OCRSystem(object):
             image = Image.fromarray(cv2.cvtColor(ori_im, cv2.COLOR_BGR2RGB))
             if not os.path.exists('result_imgs'):
                 os.mkdir('result_imgs')
-            image.save('result_imgs/result.jpg')
-            image.save('result/original.jpg')
+            image.save('result_imgs/{}'.format(this_img_name))
+            # image.save('result/{}.jpg'.format(this_img_name))
             # boxes = dt_boxes
             # txts = [rec_res[i][0] for i in range(len(rec_res))]
             # scores = [rec_res[i][1] for i in range(len(rec_res))]
@@ -333,10 +335,12 @@ class OCRSystem(object):
             scores = [rec_res[i][1] for i in range(len(rec_res))]
             im_show = draw_ocr(image, boxes, txts, scores, font_path='./PaddleOCR/StyleText/fonts/en_standard.ttf')
             im_show = Image.fromarray(im_show)
-            im_show.save('result/result.jpg')
+            if not os.path.exists('result'):
+                os.mkdir('result')
+            im_show.save('result/result_{}'.format(this_img_name))
 
             #write_result for the next step
             final_res = [[box.tolist(), res] for box, res in zip(dt_boxes, rec_res)]
             for line in final_res:
                 print(line)
-            self.write_output(final_res)
+            self.write_output(final_res, this_img_name)

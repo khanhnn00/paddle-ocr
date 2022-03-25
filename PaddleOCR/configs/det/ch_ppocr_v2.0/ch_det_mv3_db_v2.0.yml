@@ -8,11 +8,11 @@ Global:
   # evaluation is run every 5000 iterations after the 4000th iteration
   eval_batch_step: [3000, 2000]
   cal_metric_during_train: False
-  pretrained_model: ./pretrain_models/MobileNetV3_large_x0_5_pretrained
+  pretrained_model: ./PaddleOCR/output/det_mobile_v2.0/best_accuracy
   checkpoints:
   save_inference_dir:
   use_visualdl: False
-  infer_img: doc/imgs_en/img_10.jpg
+  infer_img: ../dataset/public_test_100/public_test_100_icdar/images
   save_res_path: ./output/det_db/predicts_db.txt
 
 Architecture:
@@ -107,9 +107,9 @@ Train:
 Eval:
   dataset:
     name: SimpleDataSet
-    data_dir: ../dataset/cavet_icdar_v2
+    data_dir: ../dataset/public_test_100/public_test_100_icdar/
     label_file_list:
-      - ../dataset/cavet_icdar_v2/test.txt
+      - ../dataset/public_test_100/public_test_100_icdar/gt.txt
     transforms:
       - DecodeImage: # load image
           img_mode: BGR

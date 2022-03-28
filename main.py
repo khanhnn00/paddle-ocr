@@ -10,12 +10,17 @@ from PaddleOCR.OCRSystem import OCRSystem
 from PICK.PICKSystem import PICKSystem
 from PaddleOCR.ppocr.utils.utility import get_image_file_list
 import PaddleOCR.tools.my_program as program
+from KIE import get_kie
 
 def main():
     ocr = OCRSystem(config, device, logger, vdl_writer)
     picker = PICKSystem(logger)
     img_list = get_image_file_list(config['Det']['Global']['infer_img'])
     ocr(img_list)
+    # imgs, img_names, bboxes, trans = ocr(img_list)
+    # for i in range(0, len(bboxes)):
+    #     # print(bboxes[i], trans[i])
+    #     a = get_kie(imgs[i], img_names[i], bboxes[i], trans[i])
     picker('result_imgs', 'result_trans')
     
 if __name__ == '__main__':

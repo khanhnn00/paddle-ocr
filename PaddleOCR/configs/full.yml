@@ -13,7 +13,7 @@ Det:
     checkpoints:
     save_inference_dir:
     use_visualdl: False
-    infer_img: ../dataset/PICK/public_test/cavet_icdar/images/
+    infer_img: ../dataset/public_test_100/public_test_100_icdar/images/
     save_res_path: ./PaddleOCR/output/det_db/predicts_db.txt
 
   Architecture:

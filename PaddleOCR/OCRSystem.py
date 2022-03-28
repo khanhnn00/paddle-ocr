@@ -235,6 +235,10 @@ class OCRSystem(object):
 
     def __call__(self, img_list):
         start = time.time()
+        kie_bboxes = []
+        kie_trans = []
+        imgs= []
+        img_names= []
         for file in img_list:
             this_img_name = os.path.basename(file)
             self.logger.info("infer_img: {}".format(file))
@@ -341,6 +345,32 @@ class OCRSystem(object):
 
             #write_result for the next step
             final_res = [[box.tolist(), res] for box, res in zip(dt_boxes, rec_res)]
+            kie_img_bboxes = []
+            kie_img_trans = []
+            kie_line_bboxes = []
+            kie_line_trans = []
             for line in final_res:
                 print(line)
+                # co_bboxes, trans = line[0], line[1]
+                # tmp_bbox = []
+                # print(trans)
+                # tmp_bbox = [','.join(str(i) for i in co_bboxes[0]) + ',' + ','.join(str(i) for i in co_bboxes[2])]
+                # for i in co_bboxes[0]:
+                #     tmp_bbox.append(i)
+                # for i in co_bboxes[2]:
+                #     tmp_bbox.append(i)
+                # tmp_trans = str(trans[0])
+                # kie_line_bboxes.append(tmp_bbox)
+                # kie_line_trans.append(tmp_trans)
+            # kie_img_bboxes.append(kie_line_bboxes)
+            # kie_img_trans.append(kie_line_trans)
+            # kie_bboxes.append(kie_img_bboxes[0])
+            # kie_trans.append(kie_img_trans[0])
+            # imgs.append(src_img)
+            # img_names.append(this_img_name)
             self.write_output(final_res, this_img_name)
+        # print(kie_bboxes)
+        # print(kie_trans)
+        # print(np.array(kie_bboxes).shape)
+        # print(np.array(kie_trans).shape)
+        # return imgs, img_names, np.array(kie_bboxes), np.array(kie_trans)

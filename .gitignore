@@ -20,6 +20,11 @@ result/
 result_imgs/
 result_json/
 result_trans/
+modules/PaddleOCR
+modules/PICK
+
+modules/yolov5/weights
+modules/vietocr/weights
 
 *.DS_Store
 *.vs

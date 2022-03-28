@@ -1,0 +1,247 @@
+Yolo:
+    weight_path: './modules/yolov5/weights/best_ckp.pt'
+    # infer_img: ../dataset/public_test_100/public_test_100_icdar/images/
+    conf: 0.4
+    iou: 0.2
+
+VietOCR:
+    config: './modules/vietocr/config_text_line_recognition_new_vocab.yml'
+    weight_path: './modules/vietocr/weights/transformerocr_0.73475.pth'
+    batch_size: 48
+
+Det:
+  Global:
+    use_gpu: true
+    epoch_num: 1200
+    log_smooth_window: 20
+    print_batch_step: 2
+    save_model_dir: ./PaddleOCR/output/det_mobile_v2.0/
+    save_epoch_step: 100
+    # evaluation is run every 5000 iterations after the 4000th iteration
+    eval_batch_step: [3000, 2000]
+    cal_metric_during_train: False
+    pretrained_model: ./PaddleOCR/output/det_mobile_v2.0/best_accuracy
+    checkpoints:
+    save_inference_dir:
+    use_visualdl: False
+    infer_img: ../dataset/public_test_100/public_test_100_icdar/images/
+    save_res_path: ./PaddleOCR/output/det_db/predicts_db.txt
+
+  Architecture:
+    model_type: det
+    algorithm: DB
+    Transform:
+    Backbone:
+      name: MobileNetV3
+      scale: 0.5
+      model_name: large
+      disable_se: True
+    Neck:
+      name: DBFPN
+      out_channels: 96
+    Head:
+      name: DBHead
+      k: 50
+
+  Loss:
+    name: DBLoss
+    balance_loss: true
+    main_loss_type: DiceLoss
+    alpha: 5
+    beta: 10
+    ohem_ratio: 3
+
+  Optimizer:
+    name: Adam
+    beta1: 0.9
+    beta2: 0.999
+    lr:
+      name: Cosine
+      learning_rate: 0.001
+      warmup_epoch: 2
+    regularizer:
+      name: 'L2'
+      factor: 0
+
+  PostProcess:
+    name: DBPostProcess
+    thresh: 0.3
+    box_thresh: 0.6
+    max_candidates: 1000
+    unclip_ratio: 1.5
+
+  Metric:
+    name: DetMetric
+    main_indicator: hmean
+
+  Train:
+    dataset:
+      name: SimpleDataSet
+      data_dir: ../dataset/cavet_icdar_v2
+      label_file_list:
+        - ../dataset/cavet_icdar_v2/train.txt
+      ratio_list: [1.0]
+      transforms:
+        - DecodeImage: # load image
+            img_mode: BGR
+            channel_first: False
+        - DetLabelEncode: # Class handling label
+        - IaaAugment:
+            augmenter_args:
+              - { 'type': Fliplr, 'args': { 'p': 0.5 } }
+              - { 'type': Affine, 'args': { 'rotate': [-10, 10] } }
+              - { 'type': Resize, 'args': { 'size': [0.5, 3] } }
+        - EastRandomCropData:
+            size: [960, 960]
+            max_tries: 50
+            keep_ratio: true
+        - MakeBorderMap:
+            shrink_ratio: 0.4
+            thresh_min: 0.3
+            thresh_max: 0.7
+        - MakeShrinkMap:
+            shrink_ratio: 0.4
+            min_text_size: 8
+        - NormalizeImage:
+            scale: 1./255.
+            mean: [0.485, 0.456, 0.406]
+            std: [0.229, 0.224, 0.225]
+            order: 'hwc'
+        - ToCHWImage:
+        - KeepKeys:
+            keep_keys: ['image', 'threshold_map', 'threshold_mask', 'shrink_map', 'shrink_mask'] # the order of the dataloader list
+    loader:
+      shuffle: True
+      drop_last: False
+      batch_size_per_card: 2
+      num_workers: 4
+
+  Eval:
+    dataset:
+      name: SimpleDataSet
+      data_dir: ../dataset/cavet_icdar_v2
+      label_file_list:
+        - ../dataset/cavet_icdar_v2/test.txt
+      transforms:
+        - DecodeImage: # load image
+            img_mode: BGR
+            channel_first: False
+        - DetLabelEncode: # Class handling label
+        - DetResizeForTest:
+  #           image_shape: [736, 1280]
+        - NormalizeImage:
+            scale: 1./255.
+            mean: [0.485, 0.456, 0.406]
+            std: [0.229, 0.224, 0.225]
+            order: 'hwc'
+        - ToCHWImage:
+        - KeepKeys:
+            keep_keys: ['image', 'shape', 'polys', 'ignore_tags']
+    loader:
+      shuffle: False
+      drop_last: False
+      batch_size_per_card: 1 # must be 1
+      num_workers: 2
+
+Rec:
+  Global:
+    use_gpu: True
+    epoch_num: 500
+    log_smooth_window: 20
+    print_batch_step: 10
+    save_model_dir: ./PaddleOCR/output/rec_en_number_lite_final
+    save_epoch_step: 3
+    # evaluation is run every 5000 iterations after the 4000th iteration
+    eval_batch_step: [0, 500]
+    # if pretrained_model is saved in static mode, load_static_weights must set to True
+    cal_metric_during_train: True
+    pretrained_model: ./PaddleOCR/output/rec_en_number_lite_final/best_accuracy
+    checkpoints: 
+    save_inference_dir: 
+    use_visualdl: False
+    infer_img: ../dataset/corner_dataset/images/train/crawl_00028.jpg
+    # for data or label process
+    character_dict_path: ./PaddleOCR/ppocr/utils/dict/vi_dict.txt
+    max_text_length: 40
+    infer_mode: False
+    use_space_char: True
+
+  Optimizer:
+    name: Adam
+    beta1: 0.9
+    beta2: 0.999
+    lr:
+      name: Cosine
+      learning_rate: 0.001
+    regularizer:
+      name: 'L2'
+      factor: 0.00001
+
+  Architecture:
+    model_type: rec
+    algorithm: CRNN
+    Transform:
+    Backbone:
+      name: MobileNetV3
+      scale: 0.5
+      model_name: small
+      small_stride: [1, 2, 2, 2]
+    Neck:
+      name: SequenceEncoder
+      encoder_type: rnn
+      hidden_size: 48
+    Head:
+      name: CTCHead
+      fc_decay: 0.00001
+
+  Loss:
+    name: CTCLoss
+
+  PostProcess:
+    name: CTCLabelDecode
+
+  Metric:
+    name: RecMetric
+    main_indicator: acc
+
+  Train:
+    dataset:
+      name: SimpleDataSet
+      data_dir: ../dataset/ocr_dataset/vi_00
+      label_file_list: ["./gt.txt"]
+      transforms:
+        - DecodeImage: # load image
+            img_mode: BGR
+            channel_first: False
+        - RecAug: 
+        - CTCLabelEncode: # Class handling label
+        - RecResizeImg:
+            image_shape: [3, 32, 320]
+        - KeepKeys:
+            keep_keys: ['image', 'label', 'length'] # dataloader will return list in this order
+    loader:
+      shuffle: True
+      batch_size_per_card: 300
+      drop_last: True
+      num_workers: 8
+
+  Eval:
+    dataset:
+      name: SimpleDataSet
+      data_dir: ../dataset/ocr_dataset/vi_00
+      label_file_list: ["./eval.txt"]
+      transforms:
+        - DecodeImage: # load image
+            img_mode: BGR
+            channel_first: False
+        - CTCLabelEncode: # Class handling label
+        - RecResizeImg:
+            image_shape: [3, 32, 320]
+        - KeepKeys:
+            keep_keys: ['image', 'label', 'length'] # dataloader will return list in this order
+    loader:
+      shuffle: False
+      drop_last: False
+      batch_size_per_card: 256
+      num_workers: 8
+

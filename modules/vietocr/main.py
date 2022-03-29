@@ -3,9 +3,9 @@ import sys
 import argparse
 from PIL import Image
 
-sys.path.append('./vietocr')
-from tool.predictor import Predictor
-from tool.config import Cfg
+sys.path.append('./modules/vietocr')
+from .tool.predictor import Predictor
+from .tool.config import Cfg
 
 
 class VietOCR:

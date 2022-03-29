@@ -1,0 +1,1 @@
+python3.8 tools/export_model.py -c configs/rec/multi_language/rec_en_number_lite_finetune.yml -o Global.pretrained_model=./output/rec_en_number_lite_finetune/best_accuracy  Global.save_inference_dir=./inference/rec_en_number_lite_finetune

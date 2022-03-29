@@ -4,6 +4,10 @@ import math
 from PIL import Image
 from torch.nn.functional import log_softmax, softmax
 
+import sys
+
+sys.path.append('./modules')
+
 from vietocr.model.transformerocr import VietOCR
 from vietocr.model.vocab import Vocab
 from vietocr.model.beam import Beam

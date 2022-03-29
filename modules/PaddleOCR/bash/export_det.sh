@@ -1,0 +1,1 @@
+python tools/export_model.py -c configs/det/ch_ppocr_v2.0/ch_det_mv3_db_v2.0.yml -o Global.pretrained_model=./output/det_mobile_v2.0/best_accuracy  Global.save_inference_dir=./inference/det_mobile_v2.0

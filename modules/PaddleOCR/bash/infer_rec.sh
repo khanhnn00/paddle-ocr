@@ -1,0 +1,2 @@
+# Predict English results
+python3.8 tools/infer_rec.py -c configs/rec/multi_language/rec_en_number_lite_finetune.yml -o Global.pretrained_model=output/rec_en_number_lite/latest Global.load_static_weights=false Global.infer_img=../dataset/ocr_dataset/vi_01/105.jpg

@@ -20,8 +20,8 @@ result/
 result_imgs/
 result_json/
 result_trans/
-modules/PaddleOCR
-modules/PICK
+modules/PaddleOCR/output
+modules/PICK/pretrained_models
 
 modules/yolov5/weights
 modules/vietocr/weights

@@ -4,16 +4,22 @@ import time
 import yaml
 import os
 
-from yolov5 import Yolo
-from vietocr import VietOCR
+from .yolov5 import Yolo
+from .vietocr import VietOCR
+from .PaddleOCR.OCRSystem import OCRSystem
+from .PICK.PICKSystem import PICKSystem
 import utils.preprocess as preprocess
 import utils.custom_plots as custom_plots
 
 class Predictor:
     def __init__(self, config):
         self.config = config
-        self.text_line_recognition = VietOCR(config['VietOCR'])
-        self.text_line_detection = Yolo(config['Yolo'])
+        self.vietocr = VietOCR(config['VietOCR'])
+        self.yolo = Yolo(config['Yolo'])
+        self.ocr = OCRSystem(config)
+        self.paddle_det = self.ocr.model_det
+        self.paddle_rec = self.ocr.model_rec
+        self.pick = PICKSystem()
 
     def predict(self, image):
 	# Preprocessing: Corner Detection and Stretch
@@ -39,8 +45,3 @@ class Predictor:
         print('text_line_detection time: ', end_text_line_detection - start_text_line_detection)
         print('text_line_recognition time: ', end_text_line_recognition - start_text_line_recognition)
         return draw_image
-
-# print(os.getcwd())
-# with open('../config.yml') as f:
-#     config = yaml.safe_load(f)
-# predictor = Predictor(config)

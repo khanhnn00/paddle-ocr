@@ -7,17 +7,18 @@ class Yolo:
         self.model.conf = config['conf']
         self.model.iou = config['iou']
 
-    def predict(self, img, size=640):
-        bboxes = self.model(img, size = size)
-        bboxes = bboxes.pandas().xyxy[0].values.tolist()
-        return bboxes
+    def __call__(self, img, size=640):
+        if len(img) == 1:
+            bboxes = self.model(img, size = size)
+            bboxes = bboxes.pandas().xyxy[0].values.tolist()
+            return bboxes
+        else:
+            bboxes = self.model(img, size = size)
+            bboxes = bboxes.pandas().xyxy
+            batch_bboxes = [i.values.tolist() for i in bboxes]
+            return batch_bboxes
 
-    def predict_batch(self, imgs, size=640):
-        bboxes = self.model(imgs, size = size)
-        bboxes = bboxes.pandas().xyxy
-        batch_bboxes = [i.values.tolist() for i in bboxes]
-        return batch_bboxes
-
+        
 if __name__ == '__main__':
     config = {}
     config['weight_path'] = './weights/yolov5s_b32_epoch300.pt'

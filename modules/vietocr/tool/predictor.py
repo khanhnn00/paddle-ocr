@@ -30,7 +30,7 @@ class TransformInput():
         h, w = img.shape[1:]
 
         width_size = self.get_size(w, h)
-        img = F.resize(img, (self.height, width_size), antialias = True)
+        img = F.resize(img, (self.height, width_size))
 
         return img
     
@@ -55,6 +55,7 @@ class Predictor():
             weights = config['weights']
 
         model.load_state_dict(torch.load(weights, map_location=torch.device(device)))
+        print('Successfully load weight from {}'.format(weights))
 
         self.config = config
         self.model = model
@@ -86,6 +87,7 @@ class Predictor():
             return s
 
     def predict_batch(self, imgs, batch_size):
+        # print('Dang o vietocr')
         bucket = self.process_input(imgs)
         batch_sents = []
         for i in range(0, len(bucket), batch_size):

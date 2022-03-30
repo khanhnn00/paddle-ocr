@@ -234,7 +234,7 @@ class OCRSystem(object):
         with open(result_file_path, 'w', encoding='utf8') as res:
             res.write(result)
 
-    def __call__(self, img_list):
+    def predict_det(self, img_list):
         start = time.time()
         kie_bboxes = []
         kie_trans = []
@@ -276,7 +276,9 @@ class OCRSystem(object):
                     this_img = self.getImgFromBbox(src_img, box)
                     img_list.append(this_img)
             stop_det = time.time()
-
+            return boxes, img_list, ori_im, dt_boxes
+    
+    def predict_rec(self, img_list, ori_im, dt_boxes):
             #rec goes after
             # predictor, input_tensor, output_tensors, this_config = \
             #     self.create_predictor(config['Rec'], 'rec', #self.logger)
@@ -288,7 +290,7 @@ class OCRSystem(object):
             # Sorting can speed up the recognition process
             indices = np.argsort(np.array(width_list))
             rec_res = [['', 0.0]] * img_num
-            batch_num = 8
+            batch_num = 1
 
             #inference time :)
             start_rec = time.time()
@@ -327,9 +329,9 @@ class OCRSystem(object):
             
             #visualize result
             image = Image.fromarray(cv2.cvtColor(ori_im, cv2.COLOR_BGR2RGB))
-            if not os.path.exists('result_imgs'):
-                os.mkdir('result_imgs')
-            image.save('result_imgs/{}'.format(this_img_name))
+            # if not os.path.exists('result_imgs'):
+            #     os.mkdir('result_imgs')
+            # image.save('result_imgs/result_rec.jpg')
             # image.save('result/{}.jpg'.format(this_img_name))
             # boxes = dt_boxes
             # txts = [rec_res[i][0] for i in range(len(rec_res))]
@@ -342,14 +344,11 @@ class OCRSystem(object):
             im_show = Image.fromarray(im_show)
             if not os.path.exists('result'):
                 os.mkdir('result')
-            im_show.save('result/result_{}'.format(this_img_name))
+            im_show.save('result/result_rec.jpg')
 
             #write_result for the next step
             final_res = [[box.tolist(), res] for box, res in zip(dt_boxes, rec_res)]
-            kie_img_bboxes = []
-            kie_img_trans = []
-            kie_line_bboxes = []
-            kie_line_trans = []
             for line in final_res:
                 print(line)
-            self.write_output(final_res, this_img_name)
+            self.write_output(final_res, 'result.jpg')
+            return final_res

@@ -72,6 +72,7 @@ def get_farthest_points(bboxes, center):
 
 def four_point_transform(image, pts):
     (tl, tr, br, bl) = pts
+    # print(np.array(image).shape)
     
     width_a = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
     width_b = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
@@ -83,7 +84,7 @@ def four_point_transform(image, pts):
 
     dst = np.array([[0, 0], [max_width - 1, 0], [max_width - 1, max_height - 1], [0, max_height - 1]], dtype="float32")
     M = cv2.getPerspectiveTransform(np.float32(pts), dst)
-    warped = cv2.warpPerspective(image, M, (max_width, max_height))
+    warped = cv2.warpPerspective(np.float32(image), M, (max_width, max_height))
     return warped
 
 def stretch(img, bboxes, center):

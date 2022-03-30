@@ -25,12 +25,14 @@ colors = Colors()  # create instance for 'from utils.plots import colors'
 
 
 def plot_one_box(x, label, im, color=(128, 128, 128), line_thickness=1):
+    # print(x)
     # Plots one bounding box on image 'im' using OpenCV
     assert im.data.contiguous, 'Image not contiguous. Apply np.ascontiguousarray(im) to plot_on_box() input image.'
     lw = max(round(0.0009 * sum(im.shape) / 2, 2), 1)  # line width
     # tl = round(0.0002 * sum(im.shape) / 2) + 1  # line/font thickness
     tl = max(lw - 1, 1)
     c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))
+    print(c1, c2)
     # cv2.rectangle(im, c1, c2, color, thickness=line_thickness, lineType=cv2.LINE_AA, )
     # cv2.putText(im, label, (int(x[0]), int(x[1] - 2)), 0, lw/3,  color, thickness=line_thickness, lineType=cv2.LINE_AA)
     im = Image.fromarray(im)

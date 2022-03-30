@@ -28,7 +28,7 @@ if __name__ == '__main__':
         shutil.rmtree('./result_imgs')
     if os.path.exists('./result_trans'):
         shutil.rmtree('./result_trans')
-    if os.path.exists('./result_json'):
-        shutil.rmtree('./result_json')
-    # config, device, logger, vdl_writer = program.preprocess()
+    # if os.path.exists('./result_json'):
+    #     shutil.rmtree('./result_json')
+    config, device, logger, vdl_writer = program.preprocess()
     main()

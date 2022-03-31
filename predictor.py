@@ -1,4 +1,5 @@
 import yaml
+import json
 
 from modules import Predictor
 from PaddleOCR.ppocr.utils.utility import get_image_file_list
@@ -13,5 +14,7 @@ with open('config.yml', 'r') as f:
 
 predictor = Predictor(config)
 imgs = get_image_file_list(config['Yolo']['infer_img'])
-res = predictor(imgs)
-res.save('result.jpg')
+img, final_dict = predictor(imgs)
+img.save('result.jpg')
+with open('./result.json', 'w', encoding='utf8') as f:
+    json.dump(final_dict, f, sort_keys=True, ensure_ascii=False, indent=4)

@@ -9,6 +9,11 @@ VietOCR:
     weight_path: './modules/vietocr/weights/transformerocr_0.73475.pth'
     batch_size: 48
 
+
+key_information_extraction:
+    ios: 0.4
+    max_dis_y: 3 # (distance between value and key) / (height of key)
+
 Det:
   Global:
     use_gpu: true

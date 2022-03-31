@@ -22,11 +22,11 @@ def xyxy2tlbr(bbox):
     y1 = bbox[1]
     x2 = bbox[2]
     y2 = bbox[3]
-    top_left = (x1, y1)
-    top_right = (x2, y1)
-    bottom_right = (x2, y2)
-    bottom_left = (x1, y2)
-    return (top_left, top_right, bottom_right, bottom_left)
+    top_left = [x1, y1]
+    top_right = [x2, y1]
+    bottom_right = [x2, y2]
+    bottom_left = [x1, y2]
+    return [top_left, top_right, bottom_right, bottom_left]
 
 def xywh2tlbr(bbox, image_width, image_height):
     x, y, w, h = bbox

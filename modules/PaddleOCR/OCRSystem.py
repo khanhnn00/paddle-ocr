@@ -278,7 +278,7 @@ class OCRSystem(object):
             stop_det = time.time()
             return boxes, img_list, ori_im, dt_boxes
     
-    def predict_rec(self, img_list, ori_im, dt_boxes):
+    def predict_rec(self, img_list, dt_boxes):
             #rec goes after
             # predictor, input_tensor, output_tensors, this_config = \
             #     self.create_predictor(config['Rec'], 'rec', #self.logger)
@@ -320,35 +320,14 @@ class OCRSystem(object):
                 #self.logger.debug("{}, {:.3f}".format(text, score))
             
             stop = time.time()
-            #self.logger.info(
-            #     "Predict time of detection phase: %.3fs" % (stop_det - start_det))
-            # #self.logger.info(
-            #     "Predict time of recognition phase: %.3fs" % (stop_rec - start_rec))
-            # #self.logger.info(
-            #     "Total time to run for 1 image: %.3fs" % (stop - start))
-            
-            #visualize result
-            image = Image.fromarray(cv2.cvtColor(ori_im, cv2.COLOR_BGR2RGB))
-            # if not os.path.exists('result_imgs'):
-            #     os.mkdir('result_imgs')
-            # image.save('result_imgs/result_rec.jpg')
-            # image.save('result/{}.jpg'.format(this_img_name))
-            # boxes = dt_boxes
-            # txts = [rec_res[i][0] for i in range(len(rec_res))]
-            # scores = [rec_res[i][1] for i in range(len(rec_res))]
 
             boxes = dt_boxes
             txts = [rec_res[i][0] for i in range(len(rec_res))]
             scores = [rec_res[i][1] for i in range(len(rec_res))]
-            im_show = draw_ocr(image, boxes, txts, scores, font_path='./PaddleOCR/StyleText/fonts/en_standard.ttf')
-            im_show = Image.fromarray(im_show)
-            if not os.path.exists('result'):
-                os.mkdir('result')
-            im_show.save('result/result_rec.jpg')
 
             #write_result for the next step
             final_res = [[box.tolist(), res] for box, res in zip(dt_boxes, rec_res)]
             for line in final_res:
                 print(line)
             self.write_output(final_res, 'result.jpg')
-            return final_res
+            return rec_res

@@ -28,7 +28,7 @@ class Predictor:
         self.kie = KIE(config['key_information_extraction'])
 
         self.detect_algorithm = 'paddle'
-        self.rec_algorithm = 'vietocr'
+        self.rec_algorithm = 'paddle'
         self.text_line_detection = self.yolo
         self.text_line_recognition = self.vietocr
 
@@ -66,7 +66,6 @@ class Predictor:
         # image = cv2.imread(img_list[0])
         # cv2.imwrite('./ori_im/result.jpg', image)
         start_text_line_detection = time.time()
-        img_names = img_list
         if self.detect_algorithm == 'paddle':
             total_text_line_bboxes, det_img_list, img_names, dt_boxes = self.ocr.predict_det(img_list)
             print(np.array(total_text_line_bboxes).shape)
@@ -98,7 +97,7 @@ class Predictor:
                     tlbrs.append(np.array(tlbr))
                 else:
                     tlbr = text_line_bbox
-                text_line_image = preprocess.four_point_transform(img_names[idx], tlbr)
+                text_line_image = preprocess.four_point_transform(img_list[idx], tlbr)
                 text_lines_image.append(text_line_image)
             if self.detect_algorithm != 'paddle':
                 total_tlbrs.append(tlbrs)

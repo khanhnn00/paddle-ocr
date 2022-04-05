@@ -286,6 +286,7 @@ class OCRSystem(object):
             # Calculate the aspect ratio of all text bars
             width_list = []
             for img in img_list:
+                # print(img.shape)
                 width_list.append(img.shape[1] / float(img.shape[0]))
             # Sorting can speed up the recognition process
             indices = np.argsort(np.array(width_list))

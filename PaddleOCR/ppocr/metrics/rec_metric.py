@@ -102,11 +102,10 @@ class RecMetric(object):
             labels = labels.lower()
             preds = preds.lower()
             actual_list = labels.split(' ')
-            total_cer += cer(labels, preds)# / len(labels)
+            total_cer += min(cer(labels, preds), 1)# / len(labels)
             # print('{} {}, CER: {}'.format(labels, preds, cer(labels, preds)))
-            total_wer += wer(labels, preds)# / len(actual_list)
-            if wer(labels, preds) >=1:
-                print('{} --- {}, WER: {}'.format(labels, preds, wer(labels, preds)))
+            total_wer += min(wer(labels, preds), 1)# / len(actual_list)
+
         return total_cer/len(labels), total_wer/len(labels)
 
     def __call__(self, pred_label, *args, **kwargs):

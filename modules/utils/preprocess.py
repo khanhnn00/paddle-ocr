@@ -71,6 +71,10 @@ def get_farthest_points(bboxes, center):
     return farthest
 
 def four_point_transform(image, pts):
+    if type(image) == str:
+        # print('type str r')
+        print(image)
+        image = cv2.imread(image)
     (tl, tr, br, bl) = pts
     # print(np.array(image).shape)
     

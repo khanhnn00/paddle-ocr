@@ -1,6 +1,6 @@
 Yolo:
     weight_path: './modules/yolov5/weights/best_ckp.pt'
-    infer_img: ../dataset/public_test_100/public_test_100_icdar/images/preprocessed_cavet_fb_2_0011.jpg
+    infer_img: ../dataset/public_test_100/public_test_100_icdar/images/
     conf: 0.4
     iou: 0.2
 
@@ -29,7 +29,7 @@ Det:
     checkpoints:
     save_inference_dir:
     use_visualdl: False
-    infer_img: ../dataset/public_test_100/public_test_100_icdar/images/preprocessed_cavet_fb_2_0000.jpg
+    infer_img: ../dataset/public_test_100/public_test_100_icdar/images/
     save_res_path: ./PaddleOCR/output/det_db/predicts_db.txt
 
   Architecture:

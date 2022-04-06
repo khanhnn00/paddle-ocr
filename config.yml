@@ -1,6 +1,6 @@
 Yolo:
     weight_path: './modules/yolov5/weights/best_ckp.pt'
-    infer_img: ../dataset/public_test_100/public_test_100_icdar/images/
+    infer_img: ../dataset/public_test_100/public_test_100_icdar/images/preprocessed_cavet_fb_2_0000.jpg
     conf: 0.4
     iou: 0.2
 
@@ -160,7 +160,7 @@ Rec:
     eval_batch_step: [0, 500]
     # if pretrained_model is saved in static mode, load_static_weights must set to True
     cal_metric_during_train: True
-    pretrained_model: ./PaddleOCR/output/rec_en_number_lite_final/best_accuracy
+    pretrained_model: ./PaddleOCR/output/rec_en_number_lite_final/latest
     checkpoints: 
     save_inference_dir: 
     use_visualdl: False

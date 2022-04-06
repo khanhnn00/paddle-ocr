@@ -33,6 +33,35 @@ from .parse_config import *
 from .utils.util import iob_index_to_str, text_index_to_str
 from allennlp.data.dataset_readers.dataset_utils.span_utils import bio_tags_to_spans
 
+keys_pattern = {
+    0: "Tên chủ|chủ xe|Họ tên|Owner|full name", 
+    1: "Số máy|Engine N", 
+    2: "Địa chỉ|Address|thường trú", 
+    3: "CMND|Hộ chiếu|Identity Card|Passport", 
+    4: "Số khung|Chassis N", 
+    5: "Nhãn hiệu|Brand", 
+    6: "Loại xe|Type", 
+    7: "Số loại|Model code", 
+    8: "Màu sơn|Color", 
+    9: "Số người được phép chở|Seat capacity",
+    10: "Dung tích|Capacity|xi lanh", 
+    11: "Công suất|Horsepower", 
+    12: "Năm sản xuất|Year of manufacture", 
+    13: "Tự trọng|Empty weight", 
+    14: "Dài|Length", 
+    15: "Rộng|Width", 
+    16: "Cao|Heigh|Height", 
+    17: "Số chỗ ngồi|Sit", 
+    18: "đứng|Đứng|Stand", 
+    19: "nằm|Nằm|Lie", 
+    20: "Hàng hóa|Goods", 
+    21: "Nguồn gốc|Origin", 
+    22: "Biển số đăng ký|Biển số|số đăng ký|N Plate", 
+    23: "Đăng ký lần đầu ngày|Date of first registration|First registration date|Đăng ký lần đầu|first registration", 
+    24: "Đăng ký xe có giá trị đến ngày|Giá trị đến ngày|Date of expiry|Valid until date|Có giá trị đến ngày|date of expiry", 
+    25: "Số (Number)|Số:|Number"
+}
+
 class PICKSystem(object):
     def __init__(self):
         #self.logger = logger
@@ -46,7 +75,6 @@ class PICKSystem(object):
         self.pick_model.eval()
 
     def __call__(self, img_pth, transcript_pth):
-        os.mkdir('result_json')
         start = time.time()
         self.img_pth = img_pth
         self.transcript_pth = transcript_pth
@@ -100,9 +128,12 @@ class PICKSystem(object):
                     final_dict = {}
                     with open(result_file, 'w') as f:
                         for item in entities:
+                            # print(item)
+                            # keys_pattern[int(final_dict[item['entity_name']])] = item['text']
                             final_dict[item['entity_name']] = item['text']
                             # f.write('{}\t{}\n'.format(item['entity_name'], item['text']))
                     # json.dump()
+                    print(final_dict)
                     with open(result_file, 'w', encoding='utf8') as json_file:
                         json.dump(final_dict, json_file, sort_keys=True, ensure_ascii=False, indent=4)
                     json_file.close()

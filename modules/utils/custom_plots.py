@@ -59,5 +59,5 @@ def display(im, preds, labels):
             label = f'{label}'
             im = plot_one_box(pred, label, im, color=colors(0))
 
-    im = Image.fromarray(im.astype(np.uint8)) if isinstance(im, np.ndarray) else im  # from np
+    im = Image.fromarray(im.astype(np.uint8)) if isinstance(im, np.ndarray) else cv2.cvtColor(im, cv2.COLOR_BGR2RGB)  # from np
     return im

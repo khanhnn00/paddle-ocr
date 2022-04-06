@@ -7,6 +7,7 @@ import paddle
 import cv2
 import shutil
 import json
+from tqdm import tqdm
 
 from .yolov5 import Yolo
 from .vietocr import VietOCR
@@ -28,10 +29,9 @@ class Predictor:
         self.pick = PICKSystem()
         self.kie = KIE(config['key_information_extraction'])
 
-        self.detect_algorithm = 'paddle'
+        self.detect_algorithm = 'yolo'
         self.rec_algorithm = 'paddle'
-        self.text_line_detection = self.yolo
-        self.text_line_recognition = self.vietocr
+        self.kie_algorithm = 'pick'
 
     def write_output_vietocr(self, rec_det_res, file_name):
         if not os.path.exists('result_trans'):
@@ -67,16 +67,16 @@ class Predictor:
         os.mkdir('./result_json')
         os.mkdir('./result_imgs')
         start = time.time()
-        for each_img in img_list:
+        for each_img in tqdm(img_list):
             # print(each_img)
-            image = cv2.imread(each_img)
+            image = cv2.cvtColor(cv2.imread(each_img), cv2.COLOR_BGR2RGB)
             this_img_name = os.path.basename(each_img)
-            cv2.imwrite('./ori_im/{}'.format(this_img_name), image)
+            cv2.imwrite('./ori_im/{}'.format(this_img_name), cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
             start_text_line_detection = time.time()
             if self.detect_algorithm == 'paddle':
                 text_line_bboxes, det_img_list, image, dt_boxes = self.ocr.predict_det([each_img])
             else:
-                text_line_bboxes = self.text_line_detection([each_img])
+                text_line_bboxes = self.yolo([each_img])
             end_text_line_detection = time.time()
             text_line_images = []
             if self.detect_algorithm == 'paddle':
@@ -128,16 +128,16 @@ class Predictor:
                 draw_image = custom_plots.display(image, text_line_bboxes, text_line_texts)
 
             #PICK
-            start_pick = time.time()
-            # self.pick('ori_im', 'result_trans')
-            if self.detect_algorithm == 'paddle':
-                kie_result = self.kie.predict(image, new_text_line, text_line_texts)
-            else:
-                kie_result = self.kie.predict(image, text_line_bboxes, text_line_texts)
-            stop_pick = time.time()
+            if self.kie_algorithm != 'pick':
+                if self.detect_algorithm == 'paddle':
+                    kie_result = self.kie.predict(image, new_text_line, text_line_texts)
+                else:
+                    kie_result = self.kie.predict(image, text_line_bboxes, text_line_texts)
+                with open('./result_json/{}.json'.format(this_img_name.split('.')[0]), 'w', encoding='utf8') as f:
+                    json.dump(kie_result, f, sort_keys=True, ensure_ascii=False, indent=4)
 
             draw_image.save('./result_imgs/{}'.format(this_img_name))
-            with open('./result_json/{}.json'.format(this_img_name.split('.')[0]), 'w', encoding='utf8') as f:
-                json.dump(kie_result, f, sort_keys=True, ensure_ascii=False, indent=4)
+        if self.kie_algorithm == 'pick':
+            self.pick('ori_im', 'result_trans')
         stop = time.time()
         print('Total time: ', str(stop-start)+'s')

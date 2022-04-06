@@ -3,15 +3,15 @@ Global:
   epoch_num: 500
   log_smooth_window: 20
   print_batch_step: 10
-  save_model_dir: ./PaddleOCR/output/rec_en_number_lite_finetune
+  save_model_dir: ./PaddleOCR/output/rec_en_number_lite_final
   save_epoch_step: 50
   # evaluation is run every 5000 iterations after the 4000th iteration
   eval_batch_step: [0, 500]
   # if pretrained_model is saved in static mode, load_static_weights must set to True
   cal_metric_during_train: True
   # pretrained_model:
-  pretrained_model: ./PaddleOCR/output/rec_en_number_lite_finetune/latest
-  checkpoints: ./PaddleOCR/output/rec_en_number_lite_finetune/latest
+  pretrained_model: ./PaddleOCR/output/rec_en_number_lite_finetune/best_accuracy
+  checkpoints:
   save_inference_dir: 
   use_visualdl: True
   infer_img: ../dataset/corner_dataset/images/train/crawl_00028.jpg
@@ -63,10 +63,10 @@ Metric:
 Train:
   dataset:
     name: SimpleDataSet
-    # data_dir: ../dataset/vcc_recog/
-    # label_file_list: ["../dataset/vcc_recog/train.txt"]
-    data_dir: ../dataset/ocr_dataset/vi_00
-    label_file_list: ["../dataset/ocr_dataset/vi_00/gt.txt"]
+    data_dir: ../dataset/vcc_recog/
+    label_file_list: ["../dataset/vcc_recog/train.txt"]
+    # data_dir: ../dataset/ocr_dataset/vi_00
+    # label_file_list: ["../dataset/ocr_dataset/vi_00/gt.txt"]
     transforms:
       - DecodeImage: # load image
           img_mode: BGR
@@ -86,11 +86,11 @@ Train:
 Eval:
   dataset:
     name: SimpleDataSet
-    # data_dir: ../dataset/public_test_100/public_test_100_recog/
-    # label_file_list:
-    #   - ../dataset/public_test_100/public_test_100_recog/gt.txt
-    data_dir: ../dataset/ocr_dataset/vi_00
-    label_file_list: ["../dataset/ocr_dataset/vi_00/eval.txt"]
+    data_dir: ../dataset/public_test_100/public_test_100_recog/
+    label_file_list:
+      - ../dataset/public_test_100/public_test_100_recog/gt.txt
+    # data_dir: ../dataset/ocr_dataset/vi_00
+    # label_file_list: ["../dataset/ocr_dataset/vi_00/eval.txt"]
     transforms:
       - DecodeImage: # load image
           img_mode: BGR

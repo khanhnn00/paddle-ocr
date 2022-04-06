@@ -14,7 +14,9 @@ with open('config.yml', 'r') as f:
 
 predictor = Predictor(config)
 imgs = get_image_file_list(config['Yolo']['infer_img'])
-img, final_dict = predictor(imgs)
-img.save('result.jpg')
-with open('./result.json', 'w', encoding='utf8') as f:
-    json.dump(final_dict, f, sort_keys=True, ensure_ascii=False, indent=4)
+predictor(imgs)
+
+# img, final_dict = predictor(imgs)
+# img.save('result.jpg')
+# with open('./result.json', 'w', encoding='utf8') as f:
+#     json.dump(final_dict, f, sort_keys=True, ensure_ascii=False, indent=4)

@@ -98,8 +98,6 @@ class OCRSystem(object):
         self.model_rec.eval()
 
     def getImgFromBbox(self, src_im, bbox):
-        if type(src_im) == str: #this is just the link:
-            src_im = cv2.imread(src_im)
         box = bbox.astype(np.int32).reshape((-1, 1, 2))
         x1, y1 = box[0][0][0], box[0][0][1]
         x2, y2 = box[1][0][0], box[1][0][1]
@@ -111,6 +109,9 @@ class OCRSystem(object):
         top = y1 if y1 < y2 else y2
         btm = y3 if y3 > y4 else y4
         this_img = src_im[top:btm, left:right, :]
+        # this_img = np.expand_dims(this_img, axis=0)
+        # print(this_img.shape)
+        # this_img = this
         return this_img
 
     def filter_tag_det_res(self, dt_boxes, image_shape):
@@ -212,6 +213,8 @@ class OCRSystem(object):
             return int(gpu_id[0])
 
     def write_output(self, rec_det_res, file_name, prob_thres=0.7):
+        if not os.path.exists('result_trans'):
+            os.mkdir('result_trans')
         result = ''
         for res in rec_det_res:
             bbox, value = res
@@ -233,14 +236,13 @@ class OCRSystem(object):
 
     def predict_det(self, img_list):
         start = time.time()
+        kie_bboxes = []
+        kie_trans = []
         imgs= []
         img_names= []
-        det_img_list = []
-        dt_boxes = []
-        boxes = []
         for file in img_list:
             this_img_name = os.path.basename(file)
-            img_names.append(this_img_name)
+            #self.logger.info("infer_img: {}".format(file))
             with open(file, 'rb') as f:
                 img = f.read()
                 data = {'image': img}
@@ -255,43 +257,39 @@ class OCRSystem(object):
 
             src_img = cv2.imread(file)
             ori_im = src_img.copy()
-            cv2.imwrite('./ori_imgs/{}'.format(this_img_name), ori_im)
-            
+
             ##postprocessing the result
-            tmp_img_list = []
+            img_list = []
             start_det = time.time()
             # parser boxes if post_result is dict
             if isinstance(post_result, dict):
                 for k in post_result.keys():
-                    tmp_boxes = post_result[k][0]['points']
-                    tmp_dt_boxes = self.filter_tag_det_res(tmp_boxes, ori_im.shape)
+                    boxes = post_result[k][0]['points']
+                    dt_boxes = self.filter_tag_det_res(boxes, ori_im.shape)
+                    for box in boxes:
+                        this_img = self.getImgFromBbox(src_img, box)
+                        img_list.append(this_img)
             else:
-                tmp_boxes = post_result[0]['points']
-                tmp_dt_boxes = self.filter_tag_det_res(tmp_boxes, ori_im.shape)
-            for box in boxes:
-                this_img = self.getImgFromBbox(src_img, box)
-                # print(this_img.shape)
-                tmp_img_list.append(this_img)
-            det_img_list.append(tmp_img_list)
-            dt_boxes.append(tmp_dt_boxes)
-            boxes.append(tmp_boxes)
-        stop_det = time.time()
-        return boxes, det_img_list, img_names, dt_boxes
+                boxes = post_result[0]['points']
+                dt_boxes = self.filter_tag_det_res(boxes, ori_im.shape)
+                for box in boxes:
+                    this_img = self.getImgFromBbox(src_img, box)
+                    img_list.append(this_img)
+            stop_det = time.time()
+            return boxes, img_list, ori_im, dt_boxes
     
-    def predict_rec(self, total_img_list, total_dt_boxes, img_names):
-        idx = -1
-        for img_list, dt_boxes in zip(total_img_list, total_dt_boxes):
-            idx+=1
+    def predict_rec(self, img_list, dt_boxes,img_name):
+            #rec goes after
+
             img_num = len(img_list)
             # Calculate the aspect ratio of all text bars
             width_list = []
             for img in img_list:
-                # print(img.shape)
                 width_list.append(img.shape[1] / float(img.shape[0]))
             # Sorting can speed up the recognition process
             indices = np.argsort(np.array(width_list))
             rec_res = [['', 0.0]] * img_num
-            batch_num = 8
+            batch_num = 1
 
             #inference time :)
             start_rec = time.time()
@@ -328,7 +326,7 @@ class OCRSystem(object):
 
             #write_result for the next step
             final_res = [[box.tolist(), res] for box, res in zip(dt_boxes, rec_res)]
-            for line in final_res:
-                print(line)
-            self.write_output(final_res, os.path.basename(img_names[idx]))
-            # return rec_res
+            # for line in final_res:
+            #     print(line)
+            self.write_output(final_res, img_name)
+            return rec_res

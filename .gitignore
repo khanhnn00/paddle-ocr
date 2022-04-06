@@ -16,6 +16,7 @@ PaddleOCR/tmp/
 PICK/saved
 PICK/pretrained_models
 PICK/data
+ori_im/
 result/
 result_imgs/
 result_json/
